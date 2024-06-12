@@ -132,8 +132,17 @@ async function connectToWhatsApp(oAuth2Client) {
     
             for (const event of upcomingEvents) {
                 if (!isUserContacted(event.userId, event.eventId)) {
+                    let eventMessage = '';
+    
+                    // Determinar el mensaje basado en el tipo de evento
+                    if (event.eventType === 'Formación') {
+                        eventMessage = `Hola ${event.name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones de la Formación en Inversión de ConquerX, encantado de conocerte 😊`;
+                    } else if (event.eventType === 'Desarrollo') {
+                        eventMessage = `Hola ${event.name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones del Máster en desarrollo Full Stack de Conquer Blocks, encantado de conocerte 😊`;
+                    }
+    
                     const messages = [
-                        { text: `Hola ${event.name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones de la Formación en Inversión de ConquerX, encantado de conocerte 😊` },
+                        { text: eventMessage },
                         { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el Día: ${event.day} (${event.weekday}) - A las ${event.time} horas de ${event.country}.` },
                         { text: 'Confírmame cuando leas el mensaje para conservar tu horario y enviarte el enlace de la reunión de Google Meet 💻' }
                     ];

@@ -83,6 +83,17 @@ function getTimeDifferenceFromCountry(country) {
     return timeDifferences[country] || 0;
 }
 
+// Nueva función para determinar el tipo de evento
+function getEventType(summary) {
+    if (summary.includes('Formación')) {
+        return 'Formación';
+    } else if (summary.includes('Desarrollo')) {
+        return 'Desarrollo';
+    }
+    return 'Otro';
+}
+
+// Modificar la función listEvents para incluir el tipo de evento
 async function listEvents(auth) {
     const calendar = google.calendar({ version: 'v3', auth });
     const res = await calendar.events.list({
@@ -102,6 +113,9 @@ async function listEvents(auth) {
             const description = event.description || '';
             const summary = event.summary || '';
             const name = summary.split(':')[0].trim();
+
+            // Determinar el tipo de evento
+            const eventType = getEventType(summary);
 
             // Filtrar el número de teléfono
             const phoneMatch = description.match(/Enviar mensajes de texto a: (\+\d[\d\s]+)/);
@@ -132,6 +146,7 @@ async function listEvents(auth) {
                 userId,
                 eventId: event.id,
                 country, // Agregar el país al evento
+                eventType, // Agregar el tipo de evento
             };
         });
     } else {
