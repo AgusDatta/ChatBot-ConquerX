@@ -6,6 +6,8 @@ const { SCOPES, TOKEN_PATH, credentials } = require('./config');
 
 // Mapeo de prefijos internacionales a países
 const countryMapping = {
+    '1': 'Canada/EEUU',
+    '55': 'Brasil',
     '51': 'Peru',
     '52': 'México',
     '54': 'Argentina',
@@ -18,11 +20,13 @@ const countryMapping = {
     '591': 'Bolivia',
     '593': 'Ecuador',
     '595': 'Paraguay',
-    '598': 'Uruguay',
+    '598': 'Uruguay'
 };
 
 // Mapeo de diferencia horaria por país
 const timeDifferences = {
+    'Canada/EEUU': -1,
+    'Brasil': 0,
     'Peru': -2,
     'México': -3,
     'Argentina': 0,
@@ -70,13 +74,27 @@ async function getNewToken(oAuth2Client) {
     return oAuth2Client;
 }
 
-function getCountryFromPhoneNumber(phoneNumber) {
-    const phonePrefix = phoneNumber.match(/^\+(\d{1,3})9/);
-    if (phonePrefix) {
-        const countryCode = phonePrefix[1];
-        return countryMapping[countryCode] || 'desconocido';
+function getCountryFromDescription(description) {
+    // Obtener el número completo desde la descripción
+    const phoneMatch = description.match(/Enviar mensajes de texto a: (\+\d[\d\s]+)/);
+    if (phoneMatch) {
+        const phoneNumber = phoneMatch[1]; // Obtener el número completo con espacios
+        
+        // Extraer el prefijo internacional del número completo
+        const phonePrefix = phoneNumber.match(/^\+(\d{1,3})\D/); // Capturar prefijo internacional (antes de un espacio u otro carácter)
+        
+        if (phonePrefix) {
+            const countryCode = phonePrefix[1]; // Obtener el prefijo del número de teléfono
+            const country = countryMapping[countryCode] || 'desconocido';
+            
+            // Limpiar el número de teléfono quitando los espacios
+            const cleanedPhoneNumber = phoneNumber.trim().replace(/\s+/g, '');
+            
+            // Retornar un objeto con el país y el número limpio
+            return { country, cleanedPhoneNumber };
+        }
     }
-    return 'desconocido';
+    return { country: 'desconocido', cleanedPhoneNumber: '' };
 }
 
 function getTimeDifferenceFromCountry(country) {
@@ -94,12 +112,13 @@ function getEventType(summary) {
 }
 
 // Modificar la función listEvents para incluir el tipo de evento
+
 async function listEvents(auth) {
     const calendar = google.calendar({ version: 'v3', auth });
     const res = await calendar.events.list({
         calendarId: 'primary',
         timeMin: (new Date()).toISOString(),
-        timeMax: addDays(new Date(), 1).toISOString(),
+        timeMax: addDays(new Date(), 2).toISOString(),
         singleEvents: true,
         orderBy: 'startTime',
     });
@@ -114,15 +133,8 @@ async function listEvents(auth) {
             const summary = event.summary || '';
             const name = summary.split(':')[0].trim();
 
-            // Determinar el tipo de evento
-            const eventType = getEventType(summary);
-
-            // Filtrar el número de teléfono
-            const phoneMatch = description.match(/Enviar mensajes de texto a: (\+\d[\d\s]+)/);
-            const phoneNumber = phoneMatch ? phoneMatch[1].trim().replace(/\s+/g, '') : '';
-
-            // Determinar el país basado en el prefijo, si es posible
-            const country = getCountryFromPhoneNumber(phoneNumber);
+            // Obtener el país y el número limpio basado en la descripción del evento
+            const { country, cleanedPhoneNumber } = getCountryFromDescription(description);
 
             // Calcular la diferencia horaria
             const timeDifference = getTimeDifferenceFromCountry(country);
@@ -134,7 +146,7 @@ async function listEvents(auth) {
                 day = format(addDays(start, 1), 'd', { locale: es });
             }
 
-            const userId = `${phoneNumber.replace('+', '')}@s.whatsapp.net`;
+            const userId = `${cleanedPhoneNumber.replace('+', '')}@s.whatsapp.net`;
 
             return {
                 day,
@@ -142,11 +154,11 @@ async function listEvents(auth) {
                 time,
                 description,
                 name,
-                phoneNumber,
+                phoneNumber: cleanedPhoneNumber,
                 userId,
                 eventId: event.id,
                 country, // Agregar el país al evento
-                eventType, // Agregar el tipo de evento
+                eventType: getEventType(summary) // Agregar el tipo de evento
             };
         });
     } else {
