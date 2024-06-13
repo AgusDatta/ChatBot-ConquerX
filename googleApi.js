@@ -1,5 +1,3 @@
-googleapi
-
 const { google } = require('googleapis');
 const fs = require('fs');
 const { format, parseISO, addDays, addHours, endOfDay } = require('date-fns');
@@ -49,26 +47,23 @@ function getTimeDifferenceFromCountry(country) {
 }
 
 function getCountryFromDescription(description) {
-    // Obtener el número completo desde la descripción
-    const phoneMatch = description.match(/Enviar mensajes de texto a: (\+\d[\d\s]+)/);
+    // Expresión regular mejorada para capturar diferentes formatos de números de teléfono
+    const phoneMatch = description.match(/Enviar mensajes de texto a::?\s?(\+\d[\d\s-]+)/);
     if (phoneMatch) {
-        const phoneNumber = phoneMatch[1]; // Obtener el número completo con espacios
-        
-        // Extraer el prefijo internacional del número completo
-        const phonePrefix = phoneNumber.match(/^\+(\d{1,3})\D/); // Capturar prefijo internacional (antes de un espacio u otro carácter)
+        let phoneNumber = phoneMatch[1]; // Obtener el número completo con espacios y guiones
+        const phonePrefix = phoneNumber.match(/^\+(\d{1,3})/); // Capturar prefijo internacional
         
         if (phonePrefix) {
             const countryCode = phonePrefix[1]; // Obtener el prefijo del número de teléfono
             const country = countryMapping[countryCode] || 'desconocido';
             
-            // Limpiar el número de teléfono quitando los espacios
-            const cleanedPhoneNumber = phoneNumber.trim().replace(/\s+/g, '');
-            
+            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, ''); // Quitar espacios y guiones
+
             // Retornar un objeto con el país y el número limpio
-            return { country, cleanedPhoneNumber };
+            return { country, phoneNumber };
         }
     }
-    return { country: 'desconocido', cleanedPhoneNumber: '' };
+    return { country: 'desconocido', phoneNumber: '' };
 }
 
 function getEventType(summary) {
@@ -93,13 +88,13 @@ function getMessageBasedOnTitle(name, eventType, profileName) {
 function isValidMeeting(meeting) {
     const description = meeting.description || '';
     const title = meeting.summary || '';
-    const hasPhoneNumber = description.match(/Enviar mensajes de texto a: (\+\d[\d\s]+)/);
+    const hasPhoneNumber = description.match(/Enviar mensajes de texto a::?\s?(\+\d[\d\s-]+)/);
     const hasValidTitle = title.includes('Formación en Inversión') || title.includes('Desarrollo Full-Stack');
     
     return hasPhoneNumber && hasValidTitle;
 }
 
-async function listEvents(auth) {
+async function listEvents(auth, profileName) {
     const calendar = google.calendar({ version: 'v3', auth });
     const res = await calendar.events.list({
         calendarId: 'primary',
@@ -128,7 +123,7 @@ async function listEvents(auth) {
                 const name = summary.split(':')[0].trim();
 
                 // Obtener el país y el número limpio basado en la descripción del evento
-                const { country, cleanedPhoneNumber } = getCountryFromDescription(description);
+                const { country, phoneNumber: cleanedPhoneNumber } = getCountryFromDescription(description);
 
                 // Calcular la diferencia horaria
                 const timeDifference = getTimeDifferenceFromCountry(country);
@@ -143,7 +138,7 @@ async function listEvents(auth) {
                 const userId = `${cleanedPhoneNumber.replace('+', '')}@s.whatsapp.net`;
 
                 const eventType = getEventType(summary);
-                const dynamicMessagePart = getMessageBasedOnTitle(name, eventType);
+                const dynamicMessagePart = getMessageBasedOnTitle(name, eventType, profileName);
 
                 return {
                     day,

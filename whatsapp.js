@@ -1,5 +1,3 @@
-whatsapp.js
-
 const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const P = require('pino');
@@ -125,7 +123,7 @@ async function connectToWhatsApp(oAuth2Client) {
 
     async function notifyNextEvents(sock, userId, authClient) {
         const profileName = await googleApi.getProfileName(authClient);
-        const upcomingEvents = await googleApi.listEvents(authClient) || []; // Si listEvents devuelve null, asignamos un array vacío
+        const upcomingEvents = await googleApi.listEvents(authClient, profileName) || []; // Pasar profileName
     
         if (upcomingEvents.length > 0) {
             let sentMessagesCount = 0; // Contador de mensajes enviados
@@ -134,7 +132,7 @@ async function connectToWhatsApp(oAuth2Client) {
     
             for (const event of upcomingEvents) {
                 if (!isUserContacted(event.userId, event.eventId)) {
-                    const dynamicMessagePart = googleApi.getMessageBasedOnTitle(event.name, event.eventType, profileName);
+                    const dynamicMessagePart = event.dynamicMessagePart; // Obtener mensaje dinámico ya procesado
                     const messages = [
                         { text: dynamicMessagePart },
                         { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el Día: ${event.day} (${event.weekday}) - A las ${event.time} horas de ${event.country}.` },
