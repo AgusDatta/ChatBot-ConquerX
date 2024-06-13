@@ -121,54 +121,46 @@ async function connectToWhatsApp(oAuth2Client) {
         }
     });
 
-async function notifyNextEvents(sock, userId, authClient) {
-    const profileName = await googleApi.getProfileName(authClient);
-    upcomingEvents = await googleApi.listEvents(authClient) || []; // Si listEvents devuelve null, asignamos un array vacío
-
-    if (upcomingEvents.length > 0) {
-        let sentMessagesCount = 0; // Contador de mensajes enviados
-        let sentMessagesDetails = ''; // Detalles de los mensajes enviados
-        let notSentMessagesDetails = ''; // Detalles de los mensajes no enviados
-
-        for (const event of upcomingEvents) {
-            if (!isUserContacted(event.userId, event.eventId)) {
-                let eventMessage = '';
-
-                // Determinar el mensaje basado en el tipo de evento
-                if (event.eventType === 'Formación') {
-                    eventMessage = `Hola ${event.name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones de la Formación en Inversión de ConquerX, encantado de conocerte 😊`;
-                } else if (event.eventType === 'Desarrollo') {
-                    eventMessage = `Hola ${event.name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones del Máster en desarrollo Full Stack de Conquer Blocks, encantado de conocerte 😊`;
+    async function notifyNextEvents(sock, userId, authClient) {
+        const profileName = await googleApi.getProfileName(authClient);
+        const upcomingEvents = await googleApi.listEvents(authClient) || []; // Si listEvents devuelve null, asignamos un array vacío
+    
+        if (upcomingEvents.length > 0) {
+            let sentMessagesCount = 0; // Contador de mensajes enviados
+            let sentMessagesDetails = ''; // Detalles de los mensajes enviados
+            let notSentMessagesDetails = ''; // Detalles de los mensajes no enviados
+    
+            for (const event of upcomingEvents) {
+                if (!isUserContacted(event.userId, event.eventId)) {
+                    const dynamicMessagePart = googleApi.getMessageBasedOnTitle(event.name, event.eventType, profileName);
+                    const messages = [
+                        { text: dynamicMessagePart },
+                        { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el Día: ${event.day} (${event.weekday}) - A las ${event.time} horas de ${event.country}.` },
+                        { text: 'Confírmame cuando leas el mensaje para conservar tu horario y enviarte el enlace de la reunión de Google Meet 💻' }
+                    ];
+    
+                    for (const message of messages) {
+                        await sock.sendMessage(event.userId, { text: message.text });
+                    }
+    
+                    addUserToContacted(event.userId, event.eventId);
+                    sentMessagesCount++; // Incrementar el contador
+                    sentMessagesDetails += `Mensaje enviado a ${event.userId.split('@')[0]}\n`;
+                } else {
+                    notSentMessagesDetails += `No se envió mensaje a ${event.userId.split('@')[0]} porque ya se había enviado anteriormente\n`;
                 }
-
-                const messages = [
-                    { text: eventMessage },
-                    { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el Día: ${event.day} (${event.weekday}) - A las ${event.time} horas de ${event.country}.` },
-                    { text: 'Confírmame cuando leas el mensaje para conservar tu horario y enviarte el enlace de la reunión de Google Meet 💻' }
-                ];
-
-                for (const message of messages) {
-                    await sock.sendMessage(event.userId, { text: message.text });
-                }
-
-                addUserToContacted(event.userId, event.eventId);
-                sentMessagesCount++; // Incrementar el contador
-                sentMessagesDetails += `Mensaje enviado a ${event.userId.split('@')[0]}\n`;
-            } else {
-                notSentMessagesDetails += `No se envió mensaje a ${event.userId.split('@')[0]} porque ya se había enviado anteriormente\n`;
             }
+            let consolidatedMessage = `Mensajes enviados a ${sentMessagesCount} próximo(s) evento(s).\n\n${sentMessagesDetails}\n${notSentMessagesDetails}`;
+            await sock.sendMessage(MAIN_CONTACT, { text: consolidatedMessage });
+        } else {
+            console.log('No se encontraron eventos.');
+            await sock.sendMessage(MAIN_CONTACT, { text: 'No se encontraron eventos.' });
         }
-        let consolidatedMessage = `Mensajes enviados a ${sentMessagesCount} próximo(s) evento(s).\n\n${sentMessagesDetails}\n${notSentMessagesDetails}`;
-        await sock.sendMessage(MAIN_CONTACT, { text: consolidatedMessage });
-    } else {
-        console.log('No se encontraron eventos.');
-        await sock.sendMessage(MAIN_CONTACT, { text: 'No se encontraron eventos.' });
     }
-}
     
 }
 
-module.exports = { sendAuthUrl, connectToWhatsApp };
+module.exports = { sendAuthUrl, connectToWhatsApp};
 
 // Load contacted users on startup
 loadContactedUsers();
