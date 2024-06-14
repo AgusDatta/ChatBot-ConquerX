@@ -123,7 +123,7 @@ async function connectToWhatsApp(oAuth2Client) {
 
     async function notifyNextEvents(sock, userId, authClient) {
         const profileName = await googleApi.getProfileName(authClient);
-        const upcomingEvents = await googleApi.listEvents(authClient, profileName) || []; // Pasar profileName
+        const upcomingEvents = await googleApi.listEvents(authClient, profileName, sock) || []; // Pasar profileName
     
         if (upcomingEvents.length > 0) {
             let sentMessagesCount = 0; // Contador de mensajes enviados
@@ -160,8 +160,7 @@ async function connectToWhatsApp(oAuth2Client) {
     
 }
 
-module.exports = { sendAuthUrl, connectToWhatsApp};
+module.exports = { sendAuthUrl, connectToWhatsApp };
 
 // Load contacted users on startup
 loadContactedUsers();
-

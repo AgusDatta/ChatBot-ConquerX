@@ -1,3 +1,4 @@
+// googleApi.js
 const { google } = require('googleapis');
 const fs = require('fs');
 const { format, parseISO, addDays, addHours, endOfDay } = require('date-fns');
@@ -94,7 +95,16 @@ function isValidMeeting(meeting) {
     return hasPhoneNumber && hasValidTitle;
 }
 
-async function listEvents(auth, profileName) {
+// Nueva función para verificar si el número está en WhatsApp y obtener el JID
+async function checkWhatsAppNumber(sock, phoneNumber) {
+    const [result] = await sock.onWhatsApp(phoneNumber);
+    if (result && result.exists) {
+        return result.jid;
+    }
+    return null;
+}
+
+async function listEvents(auth, profileName, sock) {
     const calendar = google.calendar({ version: 'v3', auth });
     const res = await calendar.events.list({
         calendarId: 'primary',
@@ -105,7 +115,7 @@ async function listEvents(auth, profileName) {
     });
     const events = res.data.items;
     if (events.length) {
-        return events.map(event => {
+        return await Promise.all(events.map(async event => {
             // Validar la reunión antes de procesarla
             if (!isValidMeeting(event)) {
                 console.log('Reunión no válida, saltando:', event.summary);
@@ -125,6 +135,13 @@ async function listEvents(auth, profileName) {
                 // Obtener el país y el número limpio basado en la descripción del evento
                 const { country, phoneNumber: cleanedPhoneNumber } = getCountryFromDescription(description);
 
+                // Verificar si el número está en WhatsApp y obtener el JID
+                const userId = await checkWhatsAppNumber(sock, cleanedPhoneNumber);
+                if (!userId) {
+                    console.log(`Número no registrado en WhatsApp: ${cleanedPhoneNumber}`);
+                    return null;
+                }
+
                 // Calcular la diferencia horaria
                 const timeDifference = getTimeDifferenceFromCountry(country);
                 const adjustedTime = addHours(start, timeDifference);
@@ -134,8 +151,6 @@ async function listEvents(auth, profileName) {
                 if (adjustedTime.getDate() !== start.getDate()) {
                     day = format(addDays(start, 1), 'd', { locale: es });
                 }
-
-                const userId = `${cleanedPhoneNumber.replace('+', '')}@s.whatsapp.net`;
 
                 const eventType = getEventType(summary);
                 const dynamicMessagePart = getMessageBasedOnTitle(name, eventType, profileName);
@@ -157,7 +172,7 @@ async function listEvents(auth, profileName) {
                 console.error('Error procesando la reunión:', event.summary, error);
                 return null;
             }
-        }).filter(event => event !== null); // Filtrar reuniones no válidas
+        })).then(events => events.filter(event => event !== null)); // Filtrar reuniones no válidas
     } else {
         return null;
     }
