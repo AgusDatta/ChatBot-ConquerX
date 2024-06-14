@@ -133,11 +133,22 @@ async function connectToWhatsApp(oAuth2Client) {
             for (const event of upcomingEvents) {
                 if (!isUserContacted(event.userId, event.eventId)) {
                     const dynamicMessagePart = event.dynamicMessagePart; // Obtener mensaje dinámico ya procesado
-                    const messages = [
-                        { text: dynamicMessagePart },
-                        { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el Día: ${event.day} (${event.weekday}) - A las ${event.time} horas de ${event.country}.` },
-                        { text: 'Confírmame cuando leas el mensaje para enviarte el enlace de Google Meet y un PDF con información importante 💻' }
-                    ];
+                    
+                    // Mensajes dependiendo del país
+                    let messages = [];
+                    if (event.country === 'Canada/EEUU') {
+                        messages = [
+                            { text: dynamicMessagePart },
+                            { text: 'Te escribo para confirmar que tenemos agendada una sesión de claridad para el día y horario pactado.' },
+                            { text: 'Confírmame cuando leas el mensaje para enviarte el enlace de Google Meet y un PDF con información importante 💻' }
+                        ];
+                    } else {
+                        messages = [
+                            { text: dynamicMessagePart },
+                            { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el Día: ${event.day} (${event.weekday}) - A las ${event.time} horas de ${event.country}.` },
+                            { text: 'Confírmame cuando leas el mensaje para enviarte el enlace de Google Meet y un PDF con información importante 💻' }
+                        ];
+                    }
     
                     for (const message of messages) {
                         await sock.sendMessage(event.userId, { text: message.text });
@@ -157,7 +168,23 @@ async function connectToWhatsApp(oAuth2Client) {
             await sock.sendMessage(MAIN_CONTACT, { text: 'No se encontraron eventos.' });
         }
     }
+
+    async function notifyUnregisteredNumbers(sock, phoneNumber) {
+        await sock.sendMessage(MAIN_CONTACT, { text: `Número no registrado en WhatsApp: ${phoneNumber}` });
+    }
     
+    // Modificar checkWhatsAppNumber para notificar números no registrados
+    async function checkWhatsAppNumber(sock, phoneNumber) {
+        const [result] = await sock.onWhatsApp(phoneNumber);
+        if (result && result.exists) {
+            return result.jid;
+        } else {
+            console.log(`Número no registrado en WhatsApp: ${phoneNumber}`);
+            await notifyUnregisteredNumbers(sock, phoneNumber);
+            return null;
+        }
+    }
+
 }
 
 module.exports = { sendAuthUrl, connectToWhatsApp };
