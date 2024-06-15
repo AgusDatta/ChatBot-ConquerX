@@ -123,7 +123,7 @@ async function connectToWhatsApp(oAuth2Client) {
 
     async function notifyNextEvents(sock, userId, authClient) {
         const profileName = await googleApi.getProfileName(authClient);
-        const upcomingEvents = await googleApi.listEvents(authClient, profileName, sock) || []; // Pasar profileName
+        const upcomingEvents = await googleApi.listEvents(authClient, profileName, sock) || []; // Pasar profileName y sock
     
         if (upcomingEvents.length > 0) {
             let sentMessagesCount = 0; // Contador de mensajes enviados
@@ -169,21 +169,7 @@ async function connectToWhatsApp(oAuth2Client) {
         }
     }
 
-    async function notifyUnregisteredNumbers(sock, phoneNumber) {
-        await sock.sendMessage(MAIN_CONTACT, { text: `Número no registrado en WhatsApp: ${phoneNumber}` });
-    }
-    
-    // Modificar checkWhatsAppNumber para notificar números no registrados
-    async function checkWhatsAppNumber(sock, phoneNumber) {
-        const [result] = await sock.onWhatsApp(phoneNumber);
-        if (result && result.exists) {
-            return result.jid;
-        } else {
-            console.log(`Número no registrado en WhatsApp: ${phoneNumber}`);
-            await notifyUnregisteredNumbers(sock, phoneNumber);
-            return null;
-        }
-    }
+    // Ya no se necesita notifyUnregisteredNumbers aquí
 
 }
 

@@ -1,7 +1,6 @@
-// googleApi.js
 const { google } = require('googleapis');
 const fs = require('fs');
-const { format, parseISO, addDays, addHours, endOfDay } = require('date-fns');
+const { format, parseISO, addDays, addHours, endOfDay, addWeeks } = require('date-fns');
 const { es } = require('date-fns/locale');
 const { SCOPES, TOKEN_PATH, credentials } = require('./config');
 
@@ -48,19 +47,17 @@ function getTimeDifferenceFromCountry(country) {
 }
 
 function getCountryFromDescription(description) {
-    // Expresión regular mejorada para capturar diferentes formatos de números de teléfono
     const phoneMatch = description.match(/Enviar mensajes de texto a::?\s?(\+\d[\d\s-]+)/);
     if (phoneMatch) {
-        let phoneNumber = phoneMatch[1]; // Obtener el número completo con espacios y guiones
-        const phonePrefix = phoneNumber.match(/^\+(\d{1,3})/); // Capturar prefijo internacional
+        let phoneNumber = phoneMatch[1]; 
+        const phonePrefix = phoneNumber.match(/^\+(\d{1,3})/);
         
         if (phonePrefix) {
-            const countryCode = phonePrefix[1]; // Obtener el prefijo del número de teléfono
+            const countryCode = phonePrefix[1];
             const country = countryMapping[countryCode] || 'desconocido';
             
-            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, ''); // Quitar espacios y guiones
+            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, ''); 
 
-            // Retornar un objeto con el país y el número limpio
             return { country, phoneNumber };
         }
     }
@@ -95,13 +92,22 @@ function isValidMeeting(meeting) {
     return hasPhoneNumber && hasValidTitle;
 }
 
+// Función para notificar números no registrados
+async function notifyUnregisteredNumbers(sock, phoneNumber) {
+    console.log(`Enviando notificación de número no registrado: ${phoneNumber}`);
+    await sock.sendMessage('5491126320824@s.whatsapp.net', { text: `Número no registrado en WhatsApp: ${phoneNumber}` });
+}
+
 // Nueva función para verificar si el número está en WhatsApp y obtener el JID
 async function checkWhatsAppNumber(sock, phoneNumber) {
     const [result] = await sock.onWhatsApp(phoneNumber);
     if (result && result.exists) {
         return result.jid;
+    } else {
+        console.log(`Número no registrado en WhatsApp: ${phoneNumber}`);
+        await notifyUnregisteredNumbers(sock, phoneNumber);
+        return null;
     }
-    return null;
 }
 
 async function listEvents(auth, profileName, sock) {
@@ -109,7 +115,7 @@ async function listEvents(auth, profileName, sock) {
     const res = await calendar.events.list({
         calendarId: 'primary',
         timeMin: (new Date()).toISOString(), // Hora actual
-        timeMax: endOfDay(addDays(new Date(), 1)).toISOString(), // Final del día siguiente
+        timeMax: endOfDay(addWeeks(new Date(), 1)).toISOString(), // Final de la semana siguiente
         singleEvents: true,
         orderBy: 'startTime',
     });
