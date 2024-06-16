@@ -2,6 +2,7 @@ const { google } = require('googleapis');
 const { format, parseISO, addHours, endOfDay, addWeeks } = require('date-fns');
 const { es } = require('date-fns/locale');
 const { checkWhatsAppNumber, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./googleApi');
+const { getTimeDifferenceFromCountry } = require('./helpers'); // Importar desde helpers
 
 async function listEvents(auth, profileName, sock) {
     const calendar = google.calendar({ version: 'v3', auth });
@@ -14,10 +15,12 @@ async function listEvents(auth, profileName, sock) {
     });
     const events = res.data.items;
     if (events.length) {
-        return await Promise.all(events.map(async event => {
+        let invalidMeetingsDetails = []; // Inicializar el array para reuniones no válidas
+        let validEvents = await Promise.all(events.map(async event => {
             // Validar la reunión antes de procesarla
             if (!isValidMeeting(event)) {
                 console.log('Reunión no válida, saltando:', event.summary);
+                invalidMeetingsDetails.push(event.summary); // Agregar a reuniones no válidas
                 return null;
             }
 
@@ -72,8 +75,10 @@ async function listEvents(auth, profileName, sock) {
                 return null;
             }
         })).then(events => events.filter(event => event !== null)); // Filtrar reuniones no válidas
+        
+        return { validEvents, invalidMeetingsDetails }; // Devolver eventos válidos y reuniones no válidas
     } else {
-        return null;
+        return { validEvents: [], invalidMeetingsDetails: [] };
     }
 }
 

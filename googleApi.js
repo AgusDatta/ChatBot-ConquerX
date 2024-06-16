@@ -10,7 +10,13 @@ const UNREGISTERED_NUMBERS_FILE = './unregisteredNumbers.json';
 // Leer números no registrados desde el archivo
 function loadUnregisteredNumbers() {
     if (fs.existsSync(UNREGISTERED_NUMBERS_FILE)) {
-        return JSON.parse(fs.readFileSync(UNREGISTERED_NUMBERS_FILE, 'utf8')).unregisteredNumbers;
+        const content = fs.readFileSync(UNREGISTERED_NUMBERS_FILE, 'utf8');
+        try {
+            return JSON.parse(content).unregisteredNumbers || [];
+        } catch (error) {
+            console.error('Error parsing unregisteredNumbers.json:', error);
+            return [];
+        }
     }
     return [];
 }
@@ -62,7 +68,7 @@ async function getNewToken(oAuth2Client) {
         access_type: 'offline',
         scope: SCOPES,
     });
-    console.log('Authorize this app by visiting this url:', authUrl);
+    console.log('Autorice la app entrando a este link:', authUrl);
     const { sendAuthUrl } = require('./whatsapp'); // Importa sendAuthUrl aquí
     await sendAuthUrl(authUrl);
     return oAuth2Client;

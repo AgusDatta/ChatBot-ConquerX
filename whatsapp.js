@@ -11,7 +11,6 @@ const { listEvents } = require('./listEvents'); // Importa listEvents desde list
 const CONTACTED_USERS_FILE = './contactedUsers.json';
 const MAIN_CONTACT = '5491126320824@s.whatsapp.net';
 let contactedUsers = [];
-let invalidMeetingsDetails = ''; // Variable para almacenar detalles de reuniones no válidas
 
 // Load contacted users from file
 function loadContactedUsers() {
@@ -124,12 +123,11 @@ async function connectToWhatsApp(oAuth2Client) {
 
     async function notifyNextEvents(sock, userId, authClient, getProfileName) {
         const profileName = await getProfileName(authClient);
-        const upcomingEvents = await listEvents(authClient, profileName, sock) || []; // Pasar profileName y sock
+        const { validEvents: upcomingEvents, invalidMeetingsDetails } = await listEvents(authClient, profileName, sock) || { validEvents: [], invalidMeetingsDetails: [] }; // Pasar profileName y sock
     
         let sentMessagesCount = 0; // Contador de mensajes enviados
         let sentMessagesDetails = ''; // Detalles de los mensajes enviados
         let notSentMessagesDetails = ''; // Detalles de los mensajes no enviados
-        let invalidMeetingsDetails = ''; // Detalles de las reuniones no válidas
     
         if (upcomingEvents.length > 0) {
             for (const event of upcomingEvents) {
@@ -174,18 +172,20 @@ async function connectToWhatsApp(oAuth2Client) {
         // Consolidar y enviar el mensaje final
         let consolidatedMessage = `Mensajes enviados a ${sentMessagesCount} próximo(s) evento(s).\n\n${sentMessagesDetails}\n${notSentMessagesDetails}`;
     
+        await sock.sendMessage(MAIN_CONTACT, { text: consolidatedMessage });
+    
         if (unregisteredNumbers.length > 0) {
-            consolidatedMessage += `\n\nNúmeros no registrados en WhatsApp:\n${unregisteredNumbers.join('\n')}`;
+            await sock.sendMessage(MAIN_CONTACT, { text: `Números no registrados en WhatsApp:\n${unregisteredNumbers.join('\n')}` });
         }
     
         if (invalidMeetingsDetails.length > 0) {
-            consolidatedMessage += `\n\nReuniones no válidas:\n${invalidMeetingsDetails}`;
+            await sock.sendMessage(MAIN_CONTACT, { text: `Reuniones no válidas:\n${invalidMeetingsDetails.join('\n')}` });
         }
     
-        await sock.sendMessage(MAIN_CONTACT, { text: consolidatedMessage });
         // Resetear el archivo de números no registrados después de enviar el mensaje
         googleApi.saveUnregisteredNumbers([]);
     }
+    
 
     // Ya no se necesita notifyUnregisteredNumbers aquí
 }
