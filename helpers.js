@@ -87,8 +87,9 @@ function isValidMeeting(meeting) {
     const title = meeting.summary || '';
     const hasPhoneNumber = description.match(/Enviar mensajes de texto a::?\s?(\+\d[\d\s-]+)/);
     const hasValidTitle = title.includes('Formación en Inversión') || title.includes('Desarrollo Full-Stack');
-
-    return hasPhoneNumber && hasValidTitle;
+    const isNotCancelled = !title.startsWith('Cancelado');
+    
+    return hasPhoneNumber && hasValidTitle && isNotCancelled;
 }
 
 module.exports = {
