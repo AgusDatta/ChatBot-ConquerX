@@ -120,6 +120,7 @@ async function connectToWhatsApp(oAuth2Client) {
             }
         }
     });
+    
 
     async function notifyNextEvents(sock, userId, authClient, getProfileName) {
         const profileName = await getProfileName(authClient);
@@ -127,7 +128,7 @@ async function connectToWhatsApp(oAuth2Client) {
     
         let sentMessagesCount = 0; // Contador de mensajes enviados
         let sentMessagesDetails = ''; // Detalles de los mensajes enviados
-        let notSentMessagesDetails = ''; // Detalles de los mensajes no enviados
+        let notSentNumbers = []; // Array para números no enviados
     
         if (upcomingEvents.length > 0) {
             for (const event of upcomingEvents) {
@@ -158,7 +159,7 @@ async function connectToWhatsApp(oAuth2Client) {
                     sentMessagesCount++; // Incrementar el contador
                     sentMessagesDetails += `Mensaje enviado a ${event.userId.split('@')[0]}\n`;
                 } else {
-                    notSentMessagesDetails += `No se envió mensaje a ${event.userId.split('@')[0]} porque ya se había enviado anteriormente\n`;
+                    notSentNumbers.push(event.userId.split('@')[0]); // Agregar número al array de números no enviados
                 }
             }
         } else {
@@ -169,13 +170,21 @@ async function connectToWhatsApp(oAuth2Client) {
         // Leer números no registrados desde el archivo
         let unregisteredNumbers = googleApi.loadUnregisteredNumbers();
     
-        // Consolidar y enviar el mensaje final
-        let consolidatedMessage = `Mensajes enviados a ${sentMessagesCount} próximo(s) evento(s).\n\n${sentMessagesDetails}\n${notSentMessagesDetails}`;
+        // Construir y enviar el mensaje de números enviados
+        if (sentMessagesCount > 0) {
+            let sentMessage = `Mensajes enviados a ${sentMessagesCount} próximo(s) evento(s).\n\n${sentMessagesDetails}`;
+            await sock.sendMessage(MAIN_CONTACT, { text: sentMessage });
+        }
     
-        await sock.sendMessage(MAIN_CONTACT, { text: consolidatedMessage });
+        // Construir y enviar el mensaje de números no enviados
+        if (notSentNumbers.length > 0) {
+            let notSentMessage = `No se enviaron mensajes a los siguientes números porque ya se les envió previamente:\n\n${notSentNumbers.join('\n')}`;
+            await sock.sendMessage(MAIN_CONTACT, { text: notSentMessage });
+        }
     
         if (unregisteredNumbers.length > 0) {
-            await sock.sendMessage(MAIN_CONTACT, { text: `Números no registrados en WhatsApp:\n${unregisteredNumbers.join('\n')}` });
+            const unregisteredDetails = unregisteredNumbers.map(entry => `${entry.phoneNumber} - ${entry.title}`).join('\n');
+            await sock.sendMessage(MAIN_CONTACT, { text: `Números no registrados en WhatsApp:\n${unregisteredDetails}` });
         }
     
         if (invalidMeetingsDetails.length > 0) {
@@ -186,7 +195,7 @@ async function connectToWhatsApp(oAuth2Client) {
         googleApi.saveUnregisteredNumbers([]);
     }
     
-
+    
     // Ya no se necesita notifyUnregisteredNumbers aquí
 }
 
