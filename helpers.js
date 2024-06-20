@@ -41,10 +41,12 @@ const timeDifferences = {
     'Uruguay': 0
 };
 
+// Toma la diferencia horaria por país
 function getTimeDifferenceFromCountry(country) {
     return timeDifferences[country] || 0;
 }
 
+// Filtra la descripcion de la reunion para conseguir el numero de telefono
 function getCountryFromDescription(description) {
     const phoneMatch = description.match(/Enviar mensajes de texto a::?\s?(\+\d[\d\s-]+)/);
     if (phoneMatch) {
@@ -68,6 +70,10 @@ function getEventType(summary) {
         return 'Formación';
     } else if (summary.includes('Desarrollo Full-Stack')) {
         return 'Desarrollo';
+    } else if (summary.includes('Ciberseguridad')) {
+        return 'Ciberseguridad'
+    } else if (summary.includes('Inteligencia Artificial')) {
+        return 'Inteligencia'
     }
     return 'Otro';
 }
@@ -75,9 +81,13 @@ function getEventType(summary) {
 function getMessageBasedOnTitle(name, eventType, profileName) {
     let dynamicMessagePart = '';
     if (eventType === 'Formación') {
-        dynamicMessagePart = `Hola ${name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones de la Formación en Inversión de ConquerX, encantado de conocerte 😊`;
+        dynamicMessagePart = `Hola ${name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones de la *Formación en Inversión de ConquerX*, encantado de conocerte 😊`;
     } else if (eventType === 'Desarrollo') {
-        dynamicMessagePart = `Hola ${name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones del Máster en desarrollo Full Stack de Conquer Blocks, encantado de conocerte 😊`;
+        dynamicMessagePart = `Hola ${name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones del *Máster en desarrollo Full Stack de Conquer Blocks*, encantado de conocerte 😊`;
+    } else if (eventType === 'Ciberseguridad') {
+        dynamicMessagePart = `Hola ${name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones del *Máster en Ciberseguridad de Conquer Blocks*, encantado de conocerte 😊 `;
+    } else if (eventType === 'Inteligencia') {
+        dynamicMessagePart = `Hola ${name} 👋🏻, soy ${profileName} 🙋🏻‍♂️, responsable de admisiones del *Máster en Inteligencia Artificial de Conquer Blocks*, encantado de conocerte 😊 `;
     }
     return dynamicMessagePart;
 }
@@ -86,7 +96,7 @@ function isValidMeeting(meeting) {
     const description = meeting.description || '';
     const title = meeting.summary || '';
     const hasPhoneNumber = description.match(/Enviar mensajes de texto a::?\s?(\+\d[\d\s-]+)/);
-    const hasValidTitle = title.includes('Formación en Inversión') || title.includes('Desarrollo Full-Stack');
+    const hasValidTitle = title.includes('Formación en Inversión') || title.includes('Desarrollo Full-Stack') || title.includes('Ciberseguridad') || title.includes('Inteligencia');
     const isNotCancelled = !title.startsWith('Cancelado');
     
     return hasPhoneNumber && hasValidTitle && isNotCancelled;

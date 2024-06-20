@@ -12,24 +12,24 @@ const CONTACTED_USERS_FILE = './contactedUsers.json';
 const MAIN_CONTACT = '5491126320824@s.whatsapp.net';
 let contactedUsers = [];
 
-// Load contacted users from file
+// Carga los usuarios contactados desde el archivo .json
 function loadContactedUsers() {
     if (fs.existsSync(CONTACTED_USERS_FILE)) {
         contactedUsers = JSON.parse(fs.readFileSync(CONTACTED_USERS_FILE, 'utf8')).contactedUsers;
     }
 }
 
-// Save contacted users to file
+// Guarda los usuarios contactados en el .json
 function saveContactedUsers() {
     fs.writeFileSync(CONTACTED_USERS_FILE, JSON.stringify({ contactedUsers }, null, 2));
 }
 
-// Check if user has already been contacted
+// Chequea si el usuario ya fue contactado
 function isUserContacted(userId, eventId) {
     return contactedUsers.some(user => user.userId === userId && user.eventId === eventId);
 }
 
-// Add user to contacted list
+// Agrega al usuario a la lista de contactados
 function addUserToContacted(userId, eventId) {
     contactedUsers.push({ userId, eventId });
     saveContactedUsers();
@@ -68,7 +68,7 @@ async function sendAuthUrl(authUrl) {
             }
         });
     } catch (error) {
-        console.error('Error sending auth URL:', error);
+        console.error('Error enviando auth URL:', error);
     }
 }
 
@@ -201,5 +201,5 @@ async function connectToWhatsApp(oAuth2Client) {
 
 module.exports = { sendAuthUrl, connectToWhatsApp };
 
-// Load contacted users on startup
+// Carga los usuarios contactados en el inicio
 loadContactedUsers();

@@ -14,7 +14,7 @@ function loadUnregisteredNumbers() {
         try {
             return JSON.parse(content).unregisteredNumbers || [];
         } catch (error) {
-            console.error('Error parsing unregisteredNumbers.json:', error);
+            console.error('Error al escribir en unregisteredNumbers.json:', error);
             return [];
         }
     }
