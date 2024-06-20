@@ -4,6 +4,11 @@ const { es } = require('date-fns/locale');
 const { checkWhatsAppNumber, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./googleApi');
 const { getTimeDifferenceFromCountry } = require('./helpers'); // Importar desde helpers
 
+function formatName(name) {
+    if (!name) return '';
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+}
+
 async function listEvents(auth, profileName, sock) {
     const calendar = google.calendar({ version: 'v3', auth });
     const res = await calendar.events.list({
@@ -32,13 +37,13 @@ async function listEvents(auth, profileName, sock) {
                 let time = format(start, 'HH:mm', { locale: es });
                 const description = event.description || '';
                 const summary = event.summary || '';
-                const name = summary.split(':')[0].trim();
+                const name = formatName(summary.split(':')[0].trim());
 
                 // Obtener el país y el número limpio basado en la descripción del evento
                 const { country, phoneNumber: cleanedPhoneNumber } = getCountryFromDescription(description);
 
                 // Verificar si el número está en WhatsApp y obtener el JID
-                const userId = await checkWhatsAppNumber(sock, cleanedPhoneNumber);
+                const { userId, title } = await checkWhatsAppNumber(sock, cleanedPhoneNumber, summary);
                 if (!userId) {
                     console.log(`Número no registrado en WhatsApp: ${cleanedPhoneNumber}`);
                     return null;
@@ -68,7 +73,8 @@ async function listEvents(auth, profileName, sock) {
                     eventId: event.id,
                     country, // Agregar el país al evento
                     eventType, // Agregar el tipo de evento
-                    dynamicMessagePart // Agregar el mensaje dinámico
+                    dynamicMessagePart, // Agregar el mensaje dinámico
+                    title // Agregar el título del evento
                 };
             } catch (error) {
                 console.error('Error procesando la reunión:', event.summary, error);
@@ -81,5 +87,6 @@ async function listEvents(auth, profileName, sock) {
         return { validEvents: [], invalidMeetingsDetails: [] };
     }
 }
+
 
 module.exports = { listEvents };

@@ -27,20 +27,21 @@ function saveUnregisteredNumbers(numbers) {
 }
 
 // Nueva función para verificar si el número está en WhatsApp y obtener el JID
-async function checkWhatsAppNumber(sock, phoneNumber) {
+async function checkWhatsAppNumber(sock, phoneNumber, title) {
     const [result] = await sock.onWhatsApp(phoneNumber);
     if (result && result.exists) {
-        return result.jid;
+        return { userId: result.jid, title };
     } else {
         console.log(`Número no registrado en WhatsApp: ${phoneNumber}`);
         let unregisteredNumbers = loadUnregisteredNumbers();
-        if (!unregisteredNumbers.includes(phoneNumber)) {
-            unregisteredNumbers.push(phoneNumber);
+        if (!unregisteredNumbers.some(entry => entry.phoneNumber === phoneNumber)) {
+            unregisteredNumbers.push({ phoneNumber, title });
             saveUnregisteredNumbers(unregisteredNumbers);
         }
-        return null;
+        return { userId: null, title };
     }
 }
+
 
 async function authorize(credentials, code = null) {
     const { client_secret, client_id, redirect_uris } = credentials.installed;
