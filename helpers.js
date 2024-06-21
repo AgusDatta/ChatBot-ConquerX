@@ -49,7 +49,7 @@ function getTimeDifferenceFromCountry(country) {
 // Filtra la descripcion de la reunion para conseguir el numero de telefono
 function getCountryFromDescription(description) {
     // Simplificar la expresión regular para capturar ambas variaciones
-    const regex = /Enviar mensajes de (?:texto|WhatsApp) a:?\s?(\+\d[\d\s-]+)/;
+    const regex = /Enviar mensajes de (?:texto|WhatsApp) a::?\s?(\+\d[\d\s-]+)/;
 
     // Buscar coincidencias
     const phoneMatch = description.match(regex);
@@ -102,7 +102,7 @@ function getMessageBasedOnTitle(name, eventType, profileName) {
 function isValidMeeting(meeting) {
     const description = meeting.description || '';
     const title = meeting.summary || '';
-    const hasPhoneNumber = description.match(/Enviar mensajes de (?:texto|WhatsApp) a:?\s?(\+\d[\d\s-]+)/);
+    const hasPhoneNumber = description.match(/Enviar mensajes de (?:texto|WhatsApp) a::?\s?(\+\d[\d\s-]+)/);
     const hasValidTitle = title.includes('Formación en Inversión') || title.includes('Desarrollo Full-Stack') || title.includes('Inteligencia Artificial') || title.includes('Ciberseguridad');
     const isNotCancelled = !title.startsWith('Cancelado');
 
