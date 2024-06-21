@@ -88,5 +88,4 @@ async function listEvents(auth, profileName, sock) {
     }
 }
 
-
 module.exports = { listEvents };

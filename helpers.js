@@ -48,20 +48,27 @@ function getTimeDifferenceFromCountry(country) {
 
 // Filtra la descripcion de la reunion para conseguir el numero de telefono
 function getCountryFromDescription(description) {
-    const phoneMatch = description.match(/Enviar mensajes de texto a::?\s?(\+\d[\d\s-]+)/);
+    // Simplificar la expresión regular para capturar ambas variaciones
+    const regex = /Enviar mensajes de (?:texto|WhatsApp) a:?\s?(\+\d[\d\s-]+)/;
+
+    // Buscar coincidencias
+    const phoneMatch = description.match(regex);
+
     if (phoneMatch) {
         let phoneNumber = phoneMatch[1];
+        console.log('Número encontrado:', phoneNumber);
         const phonePrefix = phoneNumber.match(/^\+(\d{1,3})/);
-
+        
         if (phonePrefix) {
             const countryCode = phonePrefix[1];
             const country = countryMapping[countryCode] || 'desconocido';
-
-            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, '');
+            
+            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, ''); 
 
             return { country, phoneNumber };
         }
     }
+    console.log('No se encontró ningún número');
     return { country: 'desconocido', phoneNumber: '' };
 }
 
@@ -95,12 +102,13 @@ function getMessageBasedOnTitle(name, eventType, profileName) {
 function isValidMeeting(meeting) {
     const description = meeting.description || '';
     const title = meeting.summary || '';
-    const hasPhoneNumber = description.match(/Enviar mensajes de texto a::?\s?(\+\d[\d\s-]+)/);
-    const hasValidTitle = title.includes('Formación en Inversión') || title.includes('Desarrollo Full-Stack') || title.includes('Ciberseguridad') || title.includes('Inteligencia');
+    const hasPhoneNumber = description.match(/Enviar mensajes de (?:texto|WhatsApp) a:?\s?(\+\d[\d\s-]+)/);
+    const hasValidTitle = title.includes('Formación en Inversión') || title.includes('Desarrollo Full-Stack') || title.includes('Inteligencia Artificial') || title.includes('Ciberseguridad');
     const isNotCancelled = !title.startsWith('Cancelado');
-    
+
     return hasPhoneNumber && hasValidTitle && isNotCancelled;
 }
+
 
 module.exports = {
     getTimeDifferenceFromCountry,
