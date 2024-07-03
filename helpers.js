@@ -6,9 +6,11 @@ const { es } = require('date-fns/locale');
 // Mapeo de prefijos internacionales a países
 const countryMapping = {
     '1': 'Canada/EEUU',
+    '34': 'España',
     '55': 'Brasil',
     '51': 'Peru',
     '52': 'México',
+    '53': 'Cuba',
     '54': 'Argentina',
     '56': 'Chile',
     '57': 'Colombia',
@@ -25,9 +27,11 @@ const countryMapping = {
 // Mapeo de diferencia horaria por país
 const timeDifferences = {
     'Canada/EEUU': -1,
+    'España': +5,
     'Brasil': 0,
     'Peru': -2,
     'México': -3,
+    'Cuba': -1,
     'Argentina': 0,
     'Chile': -1,
     'Colombia': -2,
