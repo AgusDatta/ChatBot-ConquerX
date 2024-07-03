@@ -1,5 +1,3 @@
-// helpers.js
-
 const { format, parseISO, addDays, addHours } = require('date-fns');
 const { es } = require('date-fns/locale');
 
