@@ -9,6 +9,7 @@ const countryMapping = {
     '55': 'Brasil',
     '51': 'Peru',
     '52': 'México',
+    '53': 'Cuba',
     '54': 'Argentina',
     '56': 'Chile',
     '57': 'Colombia',
@@ -25,20 +26,21 @@ const countryMapping = {
 // Mapeo de diferencia horaria por país
 const timeDifferences = {
     'Canada/EEUU': -1,
-    'Brasil': 0,
-    'Peru': -2,
-    'México': -3,
-    'Argentina': 0,
-    'Chile': -1,
-    'Colombia': -2,
-    'Venezuela': -1,
-    'El Salvador': -3,
-    'Costa Rica': -3,
-    'Panamá': -2,
-    'Bolivia': -1,
-    'Ecuador': -2,
-    'Paraguay': -1,
-    'Uruguay': 0
+    'Brasil': +2,
+    'Peru': 0,
+    'México': -1,
+    'Cuba': +1,
+    'Argentina': +2,
+    'Chile': +1,
+    'Colombia': 0,
+    'Venezuela': +1,
+    'El Salvador': -1,
+    'Costa Rica': -1,
+    'Panamá': 0,
+    'Bolivia': +1,
+    'Ecuador': 0,
+    'Paraguay': +1,
+    'Uruguay': +2
 };
 
 // Toma la diferencia horaria por país
