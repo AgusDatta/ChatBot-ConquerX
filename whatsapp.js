@@ -146,7 +146,7 @@ async function connectToWhatsApp(oAuth2Client) {
                     } else {
                         messages = [
                             { text: dynamicMessagePart },
-                            { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el Día: ${event.day} (${event.weekday}) - A las ${event.time} horas de ${event.country}.` },
+                            { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el *Día: ${event.day} (${event.weekday}) - A las ${event.time} horas de ${event.country}*.` },
                             { text: 'Confírmame cuando leas el mensaje para enviarte el enlace de Google Meet y un PDF con información importante 💻' }
                         ];
                     }
