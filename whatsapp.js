@@ -139,7 +139,7 @@ async function connectToWhatsApp(oAuth2Client) {
                     if (event.country === 'Canada/EEUU' || event.country === 'México') {
                         messages = [
                             { text: dynamicMessagePart },
-                            { text: 'Te escribo para confirmar que tenemos agendada una sesión de claridad para el día y horario pactado.' },
+                            { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el *Día: ${event.day} (${event.weekday})* y en el horario pactado.` },
                             { text: 'Confírmame cuando leas el mensaje para enviarte el enlace de Google Meet y un PDF con información importante 💻' }
                         ];
                     } else {
