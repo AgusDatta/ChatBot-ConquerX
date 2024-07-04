@@ -1,9 +1,8 @@
-// googleApi.js
 const { google } = require('googleapis');
 const fs = require('fs');
 const { SCOPES, TOKEN_PATH, credentials } = require('./config');
 const { getProfileName } = require('./utils'); // Importa getProfileName desde utils.js
-const { getTimeDifferenceFromCountry, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./helpers'); // Importa funciones desde helpers.js
+const { getTimezoneFromCountry, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./helpers'); // Importa funciones desde helpers.js
 
 const UNREGISTERED_NUMBERS_FILE = './unregisteredNumbers.json';
 
@@ -41,7 +40,6 @@ async function checkWhatsAppNumber(sock, phoneNumber, title) {
         return { userId: null, title };
     }
 }
-
 
 async function authorize(credentials, code = null) {
     const { client_secret, client_id, redirect_uris } = credentials.installed;

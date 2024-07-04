@@ -120,7 +120,6 @@ async function connectToWhatsApp(oAuth2Client) {
             }
         }
     });
-    
 
     async function notifyNextEvents(sock, userId, authClient, getProfileName) {
         const profileName = await getProfileName(authClient);
@@ -194,7 +193,6 @@ async function connectToWhatsApp(oAuth2Client) {
         // Resetear el archivo de números no registrados después de enviar el mensaje
         googleApi.saveUnregisteredNumbers([]);
     }
-    
     
     // Ya no se necesita notifyUnregisteredNumbers aquí
 }
