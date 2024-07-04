@@ -1,8 +1,10 @@
+// listEvents.js
 const { google } = require('googleapis');
-const { format, parseISO, addHours, endOfDay, addWeeks } = require('date-fns');
+const { format, parseISO, endOfDay, addWeeks } = require('date-fns');
 const { es } = require('date-fns/locale');
+const moment = require('moment-timezone');
 const { checkWhatsAppNumber, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./googleApi');
-const { getTimeDifferenceFromCountry } = require('./helpers'); // Importar desde helpers
+const { getTimezoneFromCountry } = require('./helpers'); // Importar desde helpers
 
 function formatName(name) {
     if (!name) return '';
@@ -47,19 +49,22 @@ async function listEvents(auth, profileName, sock) {
                     return null;
                 }
 
-                // Calcular la diferencia horaria
-                const timeDifference = getTimeDifferenceFromCountry(country);
-                const adjustedTime = addHours(start, timeDifference);
+                // Obtener la zona horaria del país
+                const timezone = getTimezoneFromCountry(country);
+                const adjustedTime = moment.tz(start, timezone);
 
                 // Actualizar la hora y día si es necesario
-                let day = format(adjustedTime, 'd', { locale: es });
-                let weekday = format(adjustedTime, 'EEEE', { locale: es });
-                let time = format(adjustedTime, 'HH:mm', { locale: es });
+                let day = adjustedTime.format('D');
+                let weekday = adjustedTime.format('dddd');
+                let time = adjustedTime.format('HH:mm');
+
+                // Logs de información
+                console.log(`Hora original: ${format(originalDate, 'HH:mm', { locale: es })}, País del cliente: ${country}, Hora ajustada: ${time}`);
 
                 // Verificar si hay un cambio de día
-                if (originalDate.getDate() !== adjustedTime.getDate()) {
-                    day = format(adjustedTime, 'd', { locale: es });
-                    weekday = format(adjustedTime, 'EEEE', { locale: es });
+                if (originalDate.getDate() !== adjustedTime.date()) {
+                    day = adjustedTime.add(1, 'day').format('D');
+                    weekday = adjustedTime.format('dddd');
                 }
 
                 const eventType = getEventType(summary);
