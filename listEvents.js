@@ -32,9 +32,7 @@ async function listEvents(auth, profileName, sock) {
             // Procesamiento de la reunión válida
             try {
                 const start = parseISO(event.start.dateTime || event.start.date);
-                let day = format(start, 'd', { locale: es });
-                const weekday = format(start, 'EEEE', { locale: es });
-                let time = format(start, 'HH:mm', { locale: es });
+                const originalDate = new Date(start);
                 const description = event.description || '';
                 const summary = event.summary || '';
                 const name = formatName(summary.split(':')[0].trim());
@@ -54,9 +52,14 @@ async function listEvents(auth, profileName, sock) {
                 const adjustedTime = addHours(start, timeDifference);
 
                 // Actualizar la hora y día si es necesario
-                time = format(adjustedTime, 'HH:mm', { locale: es });
-                if (adjustedTime.getDate() !== start.getDate()) {
-                    day = format(addDays(start, 1), 'd', { locale: es });
+                let day = format(adjustedTime, 'd', { locale: es });
+                let weekday = format(adjustedTime, 'EEEE', { locale: es });
+                let time = format(adjustedTime, 'HH:mm', { locale: es });
+
+                // Verificar si hay un cambio de día
+                if (originalDate.getDate() !== adjustedTime.getDate()) {
+                    day = format(adjustedTime, 'd', { locale: es });
+                    weekday = format(adjustedTime, 'EEEE', { locale: es });
                 }
 
                 const eventType = getEventType(summary);
