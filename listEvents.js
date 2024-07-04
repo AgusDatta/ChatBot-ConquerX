@@ -3,6 +3,7 @@ const { google } = require('googleapis');
 const { format, parseISO, endOfDay, addWeeks } = require('date-fns');
 const { es } = require('date-fns/locale');
 const moment = require('moment-timezone');
+require('moment/locale/es'); // Requiere el locale español
 const { checkWhatsAppNumber, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./googleApi');
 const { getTimezoneFromCountry } = require('./helpers'); // Importar desde helpers
 
@@ -51,7 +52,7 @@ async function listEvents(auth, profileName, sock) {
 
                 // Obtener la zona horaria del país
                 const timezone = getTimezoneFromCountry(country);
-                const adjustedTime = moment.tz(start, timezone);
+                const adjustedTime = moment.tz(start, timezone).locale('es');
 
                 // Actualizar la hora y día si es necesario
                 let day = adjustedTime.format('D');
