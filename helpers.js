@@ -4,7 +4,7 @@ const moment = require('moment-timezone');
 
 // Mapeo de prefijos internacionales a países y sus zonas horarias
 const countryMapping = {
-    '1': 'Canada/EEUU',
+    '1': 'EEUU',
     '34': 'España',
     '55': 'Brasil',
     '51': 'Peru',
@@ -25,23 +25,40 @@ const countryMapping = {
 
 // Mapeo de zonas horarias por país
 const timezoneMapping = {
-    'Canada/EEUU': 'America/New_York',
-    'España': 'Europe/Madrid',
-    'Brasil': 'America/Sao_Paulo',
-    'Peru': 'America/Lima',
-    'México': 'America/Mexico_City',
-    'Cuba': 'America/Havana',
-    'Argentina': 'America/Argentina/Buenos_Aires',
-    'Chile': 'America/Santiago',
-    'Colombia': 'America/Bogota',
-    'Venezuela': 'America/Caracas',
-    'El Salvador': 'America/El_Salvador',
-    'Costa Rica': 'America/Costa_Rica',
-    'Panamá': 'America/Panama',
-    'Bolivia': 'America/La_Paz',
-    'Ecuador': 'America/Guayaquil',
-    'Paraguay': 'America/Asuncion',
-    'Uruguay': 'America/Montevideo'
+    // EEUU
+    'EEUU_Eastern': 'America/New_York',
+    'EEUU_Central': 'America/Chicago',
+    'EEUU_Mountain': 'America/Denver',
+    'EEUU_Pacific': 'America/Los_Angeles',
+    // México
+    'México_Central': 'America/Mexico_City',
+    'México_Pacific': 'America/Tijuana',
+    'México_Mountain': 'America/Chihuahua'
+};
+
+// Mapear subprefijos para EEUU y México
+const subPrefixMapping = {
+    'EEUU': {
+        // Eastern Time Zone
+        '201': 'EEUU_Eastern', '202': 'EEUU_Eastern', '203': 'EEUU_Eastern', '205': 'EEUU_Eastern',
+        '207': 'EEUU_Eastern', '212': 'EEUU_Eastern', '315': 'EEUU_Eastern', '347': 'EEUU_Eastern',
+        // Central Time Zone
+        '214': 'EEUU_Central', '312': 'EEUU_Central', '314': 'EEUU_Central', '469': 'EEUU_Central',
+        // Mountain Time Zone
+        '303': 'EEUU_Mountain', '505': 'EEUU_Mountain', '719': 'EEUU_Mountain', '970': 'EEUU_Mountain',
+        // Pacific Time Zone
+        '213': 'EEUU_Pacific', '310': 'EEUU_Pacific', '323': 'EEUU_Pacific', '408': 'EEUU_Pacific'
+        // Completa más subprefijos según sea necesario
+    },
+    'México': {
+        // Central Time Zone
+        '55': 'México_Central', '33': 'México_Central', '81': 'México_Central', '999': 'México_Central',
+        // Pacific Time Zone
+        '664': 'México_Pacific', '631': 'México_Pacific', '653': 'México_Pacific', '656': 'México_Pacific',
+        // Mountain Time Zone
+        '614': 'México_Mountain', '341': 'México_Mountain', '461': 'México_Mountain', '639': 'México_Mountain'
+        // Completa más subprefijos según sea necesario
+    }
 };
 
 // Toma la zona horaria por país
@@ -60,13 +77,19 @@ function getCountryFromDescription(description) {
     if (phoneMatch) {
         let phoneNumber = phoneMatch[1];
         console.log('Número encontrado:', phoneNumber);
-        const phonePrefix = phoneNumber.match(/^\+(\d{1,3})/);
-        
+        const phonePrefix = phoneNumber.match(/^\+(\d{1,3})(\d{1,3})?/);
+
         if (phonePrefix) {
             const countryCode = phonePrefix[1];
+            const subPrefix = phonePrefix[2];
             const country = countryMapping[countryCode] || 'desconocido';
             
-            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, ''); 
+            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, '');
+
+            if (country === 'EEUU' || country === 'México') {
+                const zone = subPrefixMapping[country][subPrefix];
+                return { country: zone ? `${country}_${zone}` : country, phoneNumber };
+            }
 
             return { country, phoneNumber };
         }

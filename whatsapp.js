@@ -136,7 +136,7 @@ async function connectToWhatsApp(oAuth2Client) {
     
                     // Mensajes dependiendo del país
                     let messages = [];
-                    if (event.country === 'Canada/EEUU' || event.country === 'México') {
+                    if (event.country === 'Canada/EEUU') {
                         messages = [
                             { text: dynamicMessagePart },
                             { text: `Te escribo para confirmar que tenemos agendada una sesión de claridad para el *Día: ${event.day} (${event.weekday})* y en el horario pactado.` },
