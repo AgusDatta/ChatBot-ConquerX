@@ -201,4 +201,3 @@ module.exports = { sendAuthUrl, connectToWhatsApp };
 
 // Carga los usuarios contactados en el inicio
 loadContactedUsers();
-
