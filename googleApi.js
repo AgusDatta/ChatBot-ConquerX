@@ -56,10 +56,28 @@ async function authorize(credentials, code = null) {
     if (fs.existsSync(TOKEN_PATH)) {
         const token = fs.readFileSync(TOKEN_PATH);
         oAuth2Client.setCredentials(JSON.parse(token));
+        if (oAuth2Client.isTokenExpiring()) {
+            await refreshAccessToken(oAuth2Client);
+        }
         return oAuth2Client;
     }
 
     return getNewToken(oAuth2Client);
+}
+
+async function refreshAccessToken(oAuth2Client) {
+    return new Promise((resolve, reject) => {
+        oAuth2Client.refreshAccessToken((err, tokens) => {
+            if (err) {
+                reject(err);
+            } else {
+                oAuth2Client.setCredentials(tokens);
+                fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
+                console.log('Access token refreshed and stored to', TOKEN_PATH);
+                resolve(oAuth2Client);
+            }
+        });
+    });
 }
 
 async function getNewToken(oAuth2Client) {
