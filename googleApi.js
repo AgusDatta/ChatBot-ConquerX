@@ -1,9 +1,8 @@
-// googleApi.js
 const { google } = require('googleapis');
 const fs = require('fs');
 const { SCOPES, TOKEN_PATH, credentials } = require('./config');
 const { getProfileName } = require('./utils'); // Importa getProfileName desde utils.js
-const { getTimeDifferenceFromCountry, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./helpers'); // Importa funciones desde helpers.js
+const { getTimezoneFromCountry, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./helpers'); // Importa funciones desde helpers.js
 
 const UNREGISTERED_NUMBERS_FILE = './unregisteredNumbers.json';
 
@@ -42,7 +41,6 @@ async function checkWhatsAppNumber(sock, phoneNumber, title) {
     }
 }
 
-
 async function authorize(credentials, code = null) {
     const { client_secret, client_id, redirect_uris } = credentials.installed;
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
@@ -58,10 +56,28 @@ async function authorize(credentials, code = null) {
     if (fs.existsSync(TOKEN_PATH)) {
         const token = fs.readFileSync(TOKEN_PATH);
         oAuth2Client.setCredentials(JSON.parse(token));
+        if (oAuth2Client.isTokenExpiring()) {
+            await refreshAccessToken(oAuth2Client);
+        }
         return oAuth2Client;
     }
 
     return getNewToken(oAuth2Client);
+}
+
+async function refreshAccessToken(oAuth2Client) {
+    return new Promise((resolve, reject) => {
+        oAuth2Client.refreshAccessToken((err, tokens) => {
+            if (err) {
+                reject(err);
+            } else {
+                oAuth2Client.setCredentials(tokens);
+                fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
+                console.log('Access token refreshed and stored to', TOKEN_PATH);
+                resolve(oAuth2Client);
+            }
+        });
+    });
 }
 
 async function getNewToken(oAuth2Client) {

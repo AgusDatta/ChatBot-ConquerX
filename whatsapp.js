@@ -120,7 +120,6 @@ async function connectToWhatsApp(oAuth2Client) {
             }
         }
     });
-    
 
     async function notifyNextEvents(sock, userId, authClient, getProfileName) {
         const profileName = await getProfileName(authClient);
@@ -137,7 +136,7 @@ async function connectToWhatsApp(oAuth2Client) {
     
                     // Mensajes dependiendo del país
                     let messages = [];
-                    if (event.country === 'Canada/EEUU') {
+                    if (event.country === 'Canada/EEUU' || event.country === 'México') {
                         messages = [
                             { text: dynamicMessagePart },
                             { text: 'Te escribo para confirmar que tenemos agendada una sesión de claridad para el día y horario pactado.' },
@@ -194,7 +193,6 @@ async function connectToWhatsApp(oAuth2Client) {
         // Resetear el archivo de números no registrados después de enviar el mensaje
         googleApi.saveUnregisteredNumbers([]);
     }
-    
     
     // Ya no se necesita notifyUnregisteredNumbers aquí
 }

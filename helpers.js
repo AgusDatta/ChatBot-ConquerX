@@ -1,9 +1,8 @@
-// helpers.js
-
-const { format, parseISO, addDays, addHours } = require('date-fns');
+const { format, parseISO } = require('date-fns');
 const { es } = require('date-fns/locale');
+const moment = require('moment-timezone');
 
-// Mapeo de prefijos internacionales a países
+// Mapeo de prefijos internacionales a países y sus zonas horarias
 const countryMapping = {
     '1': 'Canada/EEUU',
     '34': 'España',
@@ -24,30 +23,30 @@ const countryMapping = {
     '598': 'Uruguay'
 };
 
-// Mapeo de diferencia horaria por país
-const timeDifferences = {
-    'Canada/EEUU': -1,
-    'España': +5,
-    'Brasil': 0,
-    'Peru': -2,
-    'México': -3,
-    'Cuba': -1,
-    'Argentina': 0,
-    'Chile': -1,
-    'Colombia': -2,
-    'Venezuela': -1,
-    'El Salvador': -3,
-    'Costa Rica': -3,
-    'Panamá': -2,
-    'Bolivia': -1,
-    'Ecuador': -2,
-    'Paraguay': -1,
-    'Uruguay': 0
+// Mapeo de zonas horarias por país
+const timezoneMapping = {
+    'Canada/EEUU': 'America/New_York',
+    'España': 'Europe/Madrid',
+    'Brasil': 'America/Sao_Paulo',
+    'Peru': 'America/Lima',
+    'México': 'America/Mexico_City',
+    'Cuba': 'America/Havana',
+    'Argentina': 'America/Argentina/Buenos_Aires',
+    'Chile': 'America/Santiago',
+    'Colombia': 'America/Bogota',
+    'Venezuela': 'America/Caracas',
+    'El Salvador': 'America/El_Salvador',
+    'Costa Rica': 'America/Costa_Rica',
+    'Panamá': 'America/Panama',
+    'Bolivia': 'America/La_Paz',
+    'Ecuador': 'America/Guayaquil',
+    'Paraguay': 'America/Asuncion',
+    'Uruguay': 'America/Montevideo'
 };
 
-// Toma la diferencia horaria por país
-function getTimeDifferenceFromCountry(country) {
-    return timeDifferences[country] || 0;
+// Toma la zona horaria por país
+function getTimezoneFromCountry(country) {
+    return timezoneMapping[country] || 'UTC';
 }
 
 // Filtra la descripcion de la reunion para conseguir el numero de telefono
@@ -82,9 +81,9 @@ function getEventType(summary) {
     } else if (summary.includes('Desarrollo Full-Stack')) {
         return 'Desarrollo';
     } else if (summary.includes('Ciberseguridad')) {
-        return 'Ciberseguridad'
+        return 'Ciberseguridad';
     } else if (summary.includes('Inteligencia Artificial')) {
-        return 'Inteligencia'
+        return 'Inteligencia';
     }
     return 'Otro';
 }
@@ -113,9 +112,8 @@ function isValidMeeting(meeting) {
     return hasPhoneNumber && hasValidTitle && isNotCancelled;
 }
 
-
 module.exports = {
-    getTimeDifferenceFromCountry,
+    getTimezoneFromCountry,
     getCountryFromDescription,
     getEventType,
     getMessageBasedOnTitle,
