@@ -3,7 +3,7 @@ const { format, parseISO, endOfDay, addWeeks } = require('date-fns');
 const { es } = require('date-fns/locale');
 const moment = require('moment-timezone');
 const { checkWhatsAppNumber, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./googleApi');
-const { getTimezoneFromCountry } = require('./helpers'); // Importar desde helpers
+const { getTimezoneFromCountry } = require('./helpers');
 
 function formatName(name) {
     if (!name) return '';
