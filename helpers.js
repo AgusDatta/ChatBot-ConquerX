@@ -2,7 +2,6 @@ const { format, parseISO } = require('date-fns');
 const { es } = require('date-fns/locale');
 const moment = require('moment-timezone');
 
-// Mapeo de prefijos internacionales a países y sus zonas horarias
 const countryMapping = {
     '1': 'Canada/EEUU',
     '34': 'España',
