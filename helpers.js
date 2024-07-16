@@ -22,7 +22,6 @@ const countryMapping = {
     '598': 'Uruguay'
 };
 
-// Mapeo de zonas horarias por país
 const timezoneMapping = {
     'Canada/EEUU': 'America/New_York',
     'España': 'Europe/Madrid',
@@ -43,17 +42,13 @@ const timezoneMapping = {
     'Uruguay': 'America/Montevideo'
 };
 
-// Toma la zona horaria por país
 function getTimezoneFromCountry(country) {
     return timezoneMapping[country] || 'UTC';
 }
 
-// Filtra la descripcion de la reunion para conseguir el numero de telefono
 function getCountryFromDescription(description) {
-    // Simplificar la expresión regular para capturar ambas variaciones
     const regex = /Enviar mensajes de (?:texto|WhatsApp) a::?\s?(\+\d[\d\s-]+)/;
 
-    // Buscar coincidencias
     const phoneMatch = description.match(regex);
 
     if (phoneMatch) {
