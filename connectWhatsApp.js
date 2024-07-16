@@ -8,7 +8,7 @@ async function connectToWhatsApp() {
     const sock = makeWASocket({
         auth: state,
         printQRInTerminal: true,
-        logger: P({ level: 'warn' }), // Cambiar a 'error' para silenciar más mensajes
+        logger: P({ level: 'warn' }), 
         browser: ['Baileys', 'Chrome', '1.0.0'],
     });
 
