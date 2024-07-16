@@ -2,34 +2,30 @@ const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whis
 const { Boom } = require('@hapi/boom');
 const P = require('pino');
 const QRCode = require('qrcode-terminal');
-const googleApi = require('./googleApi'); // Importa el módulo entero
+const googleApi = require('./googleApi');
 const { credentials } = require('./config');
 const fs = require('fs');
-const { getProfileName } = require('./utils'); // Importa getProfileName desde utils.js
-const { listEvents } = require('./listEvents'); // Importa listEvents desde listEvents.js
+const { getProfileName } = require('./utils');
+const { listEvents } = require('./listEvents');
 
 const CONTACTED_USERS_FILE = './contactedUsers.json';
 const MAIN_CONTACT = '5491126320824@s.whatsapp.net';
 let contactedUsers = [];
 
-// Carga los usuarios contactados desde el archivo .json
 function loadContactedUsers() {
     if (fs.existsSync(CONTACTED_USERS_FILE)) {
         contactedUsers = JSON.parse(fs.readFileSync(CONTACTED_USERS_FILE, 'utf8')).contactedUsers;
     }
 }
 
-// Guarda los usuarios contactados en el .json
 function saveContactedUsers() {
     fs.writeFileSync(CONTACTED_USERS_FILE, JSON.stringify({ contactedUsers }, null, 2));
 }
 
-// Chequea si el usuario ya fue contactado
 function isUserContacted(userId, eventId) {
     return contactedUsers.some(user => user.userId === userId && user.eventId === eventId);
 }
 
-// Agrega al usuario a la lista de contactados
 function addUserToContacted(userId, eventId) {
     contactedUsers.push({ userId, eventId });
     saveContactedUsers();
@@ -40,7 +36,7 @@ async function sendAuthUrl(authUrl) {
     const sock = makeWASocket({
         auth: state,
         printQRInTerminal: true,
-        logger: P({ level: 'warn' }), // Cambiar a 'error' para silenciar más mensajes
+        logger: P({ level: 'warn' }),
         browser: ['Baileys', 'Chrome', '1.0.0'],
     });
 
@@ -56,15 +52,13 @@ async function sendAuthUrl(authUrl) {
 
             const userId = message.key.remoteJid;
 
-            // Verificar si el mensaje fue enviado por el propio bot
             if (message.key.fromMe) return;
 
-            // Obtener el código de autenticación del usuario
             if (messageContent && userId === MAIN_CONTACT) {
                 console.log('Received auth code:', messageContent.trim());
                 const oAuth2Client = await googleApi.authorize(credentials, messageContent.trim());
-                sock.end(); // Desconectar el socket después de obtener el token
-                connectToWhatsApp(oAuth2Client); // Conectar con WhatsApp usando el nuevo token
+                sock.end();
+                connectToWhatsApp(oAuth2Client);
             }
         });
     } catch (error) {
@@ -77,7 +71,7 @@ async function connectToWhatsApp(oAuth2Client) {
     const sock = makeWASocket({
         auth: state,
         printQRInTerminal: true,
-        logger: P({ level: 'warn' }), // Cambiar a 'error' para silenciar más mensajes
+        logger: P({ level: 'warn' }),
         browser: ['Baileys', 'Chrome', '1.0.0'],
     });
 
@@ -109,10 +103,8 @@ async function connectToWhatsApp(oAuth2Client) {
 
         const userId = message.key.remoteJid;
 
-        // Verificar si el mensaje fue enviado por el propio bot
         if (message.key.fromMe) return;
 
-        // Iniciar el flujo solo cuando se recibe "start"
         if (messageType === 'conversation' || messageType === 'extendedTextMessage') {
             if (messageContent.toLowerCase() === 'start') {
                 await sock.sendMessage(MAIN_CONTACT, { text: 'Comando "start" recibido. Chequeando eventos y enviando mensajes...' });
@@ -123,18 +115,17 @@ async function connectToWhatsApp(oAuth2Client) {
 
     async function notifyNextEvents(sock, userId, authClient, getProfileName) {
         const profileName = await getProfileName(authClient);
-        const { validEvents: upcomingEvents, invalidMeetingsDetails } = await listEvents(authClient, profileName, sock) || { validEvents: [], invalidMeetingsDetails: [] }; // Pasar profileName y sock
+        const { validEvents: upcomingEvents, invalidMeetingsDetails } = await listEvents(authClient, profileName, sock) || { validEvents: [], invalidMeetingsDetails: [] };
     
-        let sentMessagesCount = 0; // Contador de mensajes enviados
-        let sentMessagesDetails = ''; // Detalles de los mensajes enviados
-        let notSentNumbers = []; // Array para números no enviados
+        let sentMessagesCount = 0;
+        let sentMessagesDetails = '';
+        let notSentNumbers = [];
     
         if (upcomingEvents.length > 0) {
             for (const event of upcomingEvents) {
                 if (!isUserContacted(event.userId, event.eventId)) {
-                    const dynamicMessagePart = event.dynamicMessagePart; // Obtener mensaje dinámico ya procesado
+                    const dynamicMessagePart = event.dynamicMessagePart;
     
-                    // Mensajes dependiendo del país
                     let messages = [];
                     if (event.country === 'Canada/EEUU' || event.country === 'México') {
                         messages = [
@@ -155,10 +146,10 @@ async function connectToWhatsApp(oAuth2Client) {
                     }
     
                     addUserToContacted(event.userId, event.eventId);
-                    sentMessagesCount++; // Incrementar el contador
+                    sentMessagesCount++;
                     sentMessagesDetails += `Mensaje enviado a ${event.userId.split('@')[0]}\n`;
                 } else {
-                    notSentNumbers.push(event.userId.split('@')[0]); // Agregar número al array de números no enviados
+                    notSentNumbers.push(event.userId.split('@')[0]);
                 }
             }
         } else {
@@ -166,16 +157,13 @@ async function connectToWhatsApp(oAuth2Client) {
             await sock.sendMessage(MAIN_CONTACT, { text: 'No se encontraron eventos.' });
         }
     
-        // Leer números no registrados desde el archivo
         let unregisteredNumbers = googleApi.loadUnregisteredNumbers();
     
-        // Construir y enviar el mensaje de números enviados
         if (sentMessagesCount > 0) {
             let sentMessage = `Mensajes enviados a ${sentMessagesCount} próximo(s) evento(s).\n\n${sentMessagesDetails}`;
             await sock.sendMessage(MAIN_CONTACT, { text: sentMessage });
         }
     
-        // Construir y enviar el mensaje de números no enviados
         if (notSentNumbers.length > 0) {
             let notSentMessage = `No se enviaron mensajes a los siguientes números porque ya se les envió previamente:\n\n${notSentNumbers.join('\n')}`;
             await sock.sendMessage(MAIN_CONTACT, { text: notSentMessage });
@@ -190,14 +178,11 @@ async function connectToWhatsApp(oAuth2Client) {
             await sock.sendMessage(MAIN_CONTACT, { text: `Reuniones no válidas:\n${invalidMeetingsDetails.join('\n')}` });
         }
     
-        // Resetear el archivo de números no registrados después de enviar el mensaje
         googleApi.saveUnregisteredNumbers([]);
     }
     
-    // Ya no se necesita notifyUnregisteredNumbers aquí
 }
 
 module.exports = { sendAuthUrl, connectToWhatsApp };
 
-// Carga los usuarios contactados en el inicio
 loadContactedUsers();
