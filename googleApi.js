@@ -1,12 +1,11 @@
 const { google } = require('googleapis');
 const fs = require('fs');
 const { SCOPES, TOKEN_PATH, credentials } = require('./config');
-const { getProfileName } = require('./utils'); // Importa getProfileName desde utils.js
+const { getProfileName } = require('./utils'); 
 const { getTimezoneFromCountry, getCountryFromDescription, getEventType, getMessageBasedOnTitle, isValidMeeting } = require('./helpers'); // Importa funciones desde helpers.js
 
 const UNREGISTERED_NUMBERS_FILE = './unregisteredNumbers.json';
 
-// Leer números no registrados desde el archivo
 function loadUnregisteredNumbers() {
     if (fs.existsSync(UNREGISTERED_NUMBERS_FILE)) {
         const content = fs.readFileSync(UNREGISTERED_NUMBERS_FILE, 'utf8');
@@ -20,12 +19,10 @@ function loadUnregisteredNumbers() {
     return [];
 }
 
-// Guardar números no registrados en el archivo
 function saveUnregisteredNumbers(numbers) {
     fs.writeFileSync(UNREGISTERED_NUMBERS_FILE, JSON.stringify({ unregisteredNumbers: numbers }, null, 2));
 }
 
-// Nueva función para verificar si el número está en WhatsApp y obtener el JID
 async function checkWhatsAppNumber(sock, phoneNumber, title) {
     const [result] = await sock.onWhatsApp(phoneNumber);
     if (result && result.exists) {
@@ -86,7 +83,7 @@ async function getNewToken(oAuth2Client) {
         scope: SCOPES,
     });
     console.log('Autorice la app entrando a este link:', authUrl);
-    const { sendAuthUrl } = require('./whatsapp'); // Importa sendAuthUrl aquí
+    const { sendAuthUrl } = require('./whatsapp'); 
     await sendAuthUrl(authUrl);
     return oAuth2Client;
 }
